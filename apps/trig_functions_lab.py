@@ -79,7 +79,7 @@ def _(mo):
 
 
 @app.cell
-def _(A, B, C, D, function_type):
+def plot_function(A, B, C, D, function_type):
     import numpy as np
     import matplotlib.pyplot as plt
 
@@ -110,7 +110,8 @@ def _(A, B, C, D, function_type):
     )
 
     ax.set_xlim(-2 * np.pi, 2 * np.pi)
-    ax.set_ylim(-6, 6)
+    # All allowed curves lie within [-7, 7]; keep padding and a fixed scale.
+    ax.set_ylim(-7.5, 7.5)
 
     ax.set_xlabel("x")
     ax.set_ylabel("y")
@@ -147,7 +148,7 @@ def _(controls_panel, graph, mo):
 
 
 @app.cell
-def _(A, B, C, D, function_type, mo):
+def analyze_function(A, B, C, D, function_type, mo):
     import sympy as sp
 
     A_sym = sp.Rational(str(A.value))
@@ -168,12 +169,16 @@ def _(A, B, C, D, function_type, mo):
     D_sym = sp.Rational(str(D.value))
 
     amplitude = abs(A_sym)
-    period = 2 * sp.pi / abs(B_sym)
-    phase_shift = C_sym
+    period = None if A_sym == 0 else 2 * sp.pi / abs(B_sym)
+    phase_shift = None if A_sym == 0 else C_sym
     midline = D_sym
     maximum = D_sym + amplitude
     minimum = D_sym - amplitude
-    reflection = "Yes" if A_sym < 0 else "No"
+    reflection = (
+        "Not applicable (constant function)"
+        if A_sym == 0
+        else "Yes" if A_sym < 0 else "No"
+    )
 
     x_sym = sp.symbols("x")
 
@@ -216,7 +221,20 @@ def _(A, B, C, D, function_type, mo):
     elif D_sym < 0:
         function_tex += rf" - {sp.latex(abs(D_sym))}"
 
-    reflection = "Yes" if A_sym < 0 else "No"
+    if A_sym == 0:
+        function_tex = sp.latex(D_sym)
+
+    # A constant has every positive period, but no least positive period.
+    _period_display = (
+        "No fundamental period (constant function)"
+        if period is None
+        else f"${sp.latex(period)}$"
+    )
+    _phase_display = (
+        "Not applicable (constant function)"
+        if phase_shift is None
+        else f"${sp.latex(phase_shift)}$"
+    )
 
     mo.md(
         f"""
@@ -231,8 +249,8 @@ def _(A, B, C, D, function_type, mo):
     | Property | Value |
     |---|---|
     | **Amplitude** | ${sp.latex(amplitude)}$ |
-    | **Period** | ${sp.latex(period)}$ |
-    | **Phase shift** | ${sp.latex(phase_shift)}$ |
+    | **Period** | {_period_display} |
+    | **Phase shift** | {_phase_display} |
     | **Midline** | $y={sp.latex(midline)}$ |
     | **Maximum** | ${sp.latex(maximum)}$ |
     | **Minimum** | ${sp.latex(minimum)}$ |
