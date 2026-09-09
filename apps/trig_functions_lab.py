@@ -22,11 +22,11 @@ def _(mo):
     )
 
     A = mo.ui.slider(
-        start=1,
+        start=-5,
         stop=5,
         step=0.5,
         value=1,
-        label="Amplitude A"
+        label="Coefficient A"
     )
 
     B = mo.ui.slider(
@@ -152,6 +152,7 @@ def _(A, B, C, D, function_type, mo):
     midline = D_sym
     maximum = D_sym + amplitude
     minimum = D_sym - amplitude
+    reflection = "Yes" if A_sym < 0 else "No"
 
     x_sym = sp.symbols("x")
 
@@ -194,6 +195,8 @@ def _(A, B, C, D, function_type, mo):
     elif D_sym < 0:
         function_tex += rf" - {sp.latex(abs(D_sym))}"
 
+    reflection = "Yes" if A_sym < 0 else "No"
+
     mo.md(
         f"""
     ## Function Analysis
@@ -212,6 +215,7 @@ def _(A, B, C, D, function_type, mo):
     | **Midline** | $y={sp.latex(midline)}$ |
     | **Maximum** | ${sp.latex(maximum)}$ |
     | **Minimum** | ${sp.latex(minimum)}$ |
+    | **Reflection across midline** | **{reflection}** |
     """
     )
     return (function_tex,)
