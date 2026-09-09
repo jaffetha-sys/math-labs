@@ -54,19 +54,19 @@ def _(mo):
     )
 
     D = mo.ui.slider(
-        start=-5,
-        stop=5,
+        start=-2,
+        stop=2,
         step=0.5,
         value=0,
         label="Vertical shift D"
     )
 
-    mo.vstack([
+    controls_panel = mo.vstack([
         mo.md(
             """
-    # Trig Functions Lab
+    ## Controls
 
-    Explore how each parameter transforms the graph.
+    Change the parameters and observe how the graph responds.
     """
         ),
         function_type,
@@ -75,11 +75,11 @@ def _(mo):
         C,
         D,
     ])
-    return A, B, C, D, function_type
+    return A, B, C, D, controls_panel, function_type
 
 
 @app.cell
-def _(A, B, C, D, function_tex, function_type):
+def _(A, B, C, D, function_type):
     import numpy as np
     import matplotlib.pyplot as plt
 
@@ -110,18 +110,39 @@ def _(A, B, C, D, function_tex, function_type):
     )
 
     ax.set_xlim(-2 * np.pi, 2 * np.pi)
-    ax.set_ylim(-10.5, 10.5)
+    ax.set_ylim(-6, 6)
 
     ax.set_xlabel("x")
     ax.set_ylabel("y")
 
-    ax.set_title(
-        rf"$y = {function_tex}$"
-    )
-
     ax.grid(True, alpha=0.25)
 
-    fig
+    graph = fig
+    return (graph,)
+
+
+@app.cell
+def _(controls_panel, graph, mo):
+    mo.vstack([
+        mo.md(
+            """
+    # Trig Functions Lab
+
+    Explore how each parameter transforms sine and cosine functions.
+    """
+        ),
+
+        mo.hstack(
+            [
+                controls_panel,
+                graph,
+            ],
+            widths=[1, 2.4],
+            align="start",
+            gap=2,
+            wrap=True,
+        ),
+    ])
     return
 
 
@@ -218,7 +239,7 @@ def _(A, B, C, D, function_type, mo):
     | **Reflection across midline** | **{reflection}** |
     """
     )
-    return (function_tex,)
+    return
 
 
 if __name__ == "__main__":
