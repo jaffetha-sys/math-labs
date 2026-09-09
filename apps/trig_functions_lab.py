@@ -13,6 +13,14 @@ def _():
 
 @app.cell
 def _(mo):
+    import math
+
+    function_type = mo.ui.radio(
+        options=["Sine", "Cosine"],
+        value="Sine",
+        label="Function"
+    )
+
     A = mo.ui.slider(
         start=1,
         stop=5,
@@ -21,20 +29,70 @@ def _(mo):
         label="Amplitude A"
     )
 
-    A
-    return (A,)
+    B = mo.ui.slider(
+        start=0.5,
+        stop=4,
+        step=0.5,
+        value=1,
+        label="Frequency factor B"
+    )
+
+    C = mo.ui.dropdown(
+        options={
+            "-π": -math.pi,
+            "-3π/4": -3 * math.pi / 4,
+            "-π/2": -math.pi / 2,
+            "-π/4": -math.pi / 4,
+            "0": 0.0,
+            "π/4": math.pi / 4,
+            "π/2": math.pi / 2,
+            "3π/4": 3 * math.pi / 4,
+            "π": math.pi,
+        },
+        value="0",
+        label="Phase shift C"
+    )
+
+    D = mo.ui.slider(
+        start=-5,
+        stop=5,
+        step=0.5,
+        value=0,
+        label="Vertical shift D"
+    )
+
+    mo.vstack([
+        mo.md(
+            """
+    # Trig Functions Lab
+
+    Explore how each parameter transforms the graph.
+    """
+        ),
+        function_type,
+        A,
+        B,
+        C,
+        D,
+    ])
+    return A, B, C, D, function_type
 
 
 @app.cell
-def _(A, B, C, D):
+def _(A, B, C, D, function_tex, function_type):
     import numpy as np
     import matplotlib.pyplot as plt
 
     x = np.linspace(-2 * np.pi, 2 * np.pi, 600)
 
-    y = A.value * np.sin(
-        B.value * (x - C.value)
-    ) + D.value
+    if function_type.value == "Sine":
+        y = A.value * np.sin(
+            B.value * (x - C.value)
+        ) + D.value
+    else:
+        y = A.value * np.cos(
+            B.value * (x - C.value)
+        ) + D.value
 
     fig, ax = plt.subplots(figsize=(10, 4))
 
@@ -58,7 +116,7 @@ def _(A, B, C, D):
     ax.set_ylabel("y")
 
     ax.set_title(
-        f"y = {A.value} sin({B.value}(x - {C.value})) + {D.value}"
+        rf"$y = {function_tex}$"
     )
 
     ax.grid(True, alpha=0.25)
@@ -68,21 +126,7 @@ def _(A, B, C, D):
 
 
 @app.cell
-def _(mo):
-    B = mo.ui.slider(
-        start=0.5,
-        stop=4,
-        step=0.5,
-        value=1,
-        label="Frequency factor B"
-    )
-
-    B
-    return (B,)
-
-
-@app.cell
-def _(A, B, C, D, mo):
+def _(A, B, C, D, function_type, mo):
     import sympy as sp
 
     A_sym = sp.Rational(str(A.value))
@@ -111,11 +155,44 @@ def _(A, B, C, D, mo):
 
     x_sym = sp.symbols("x")
 
-    expr_sym = (
-        A_sym
-        * sp.sin(B_sym * (x_sym - C_sym))
-        + D_sym
-    )
+    if function_type.value == "Sine":
+        expr_sym = (
+            A_sym
+            * sp.sin(B_sym * (x_sym - C_sym))
+            + D_sym
+        )
+        trig_tex = r"\sin"
+    else:
+        expr_sym = (
+            A_sym
+            * sp.cos(B_sym * (x_sym - C_sym))
+            + D_sym
+        )
+        trig_tex = r"\cos"
+
+    # Build a clean pedagogical version of the function
+    # without allowing SymPy to rewrite sine as cosine
+
+    A_tex = "" if A_sym == 1 else sp.latex(A_sym)
+
+    if C_sym == 0:
+        phase_tex = "x"
+    elif C_sym > 0:
+        phase_tex = rf"x - {sp.latex(C_sym)}"
+    else:
+        phase_tex = rf"x + {sp.latex(abs(C_sym))}"
+
+    if B_sym == 1:
+        argument_tex = phase_tex
+    else:
+        argument_tex = rf"{sp.latex(B_sym)}\left({phase_tex}\right)"
+
+    function_tex = rf"{A_tex}{trig_tex}\left({argument_tex}\right)"
+
+    if D_sym > 0:
+        function_tex += rf" + {sp.latex(D_sym)}"
+    elif D_sym < 0:
+        function_tex += rf" - {sp.latex(abs(D_sym))}"
 
     mo.md(
         f"""
@@ -124,7 +201,7 @@ def _(A, B, C, D, mo):
     ### Current function
 
     $$
-    y = {sp.latex(expr_sym)}
+    y = {function_tex}
     $$
 
     | Property | Value |
@@ -137,39 +214,7 @@ def _(A, B, C, D, mo):
     | **Minimum** | ${sp.latex(minimum)}$ |
     """
     )
-    return
-
-
-@app.cell
-def _(mo):
-    import math
-
-    C = mo.ui.dropdown(
-        options={
-            "-π": -math.pi,
-            "-3π/4": -3 * math.pi / 4,
-            "-π/2": -math.pi / 2,
-            "-π/4": -math.pi / 4,
-            "0": 0.0,
-            "π/4": math.pi / 4,
-            "π/2": math.pi / 2,
-            "3π/4": 3 * math.pi / 4,
-            "π": math.pi,
-        },
-        value="0",
-        label="Phase shift C"
-    )
-
-    D = mo.ui.slider(
-        start=-5,
-        stop=5,
-        step=0.5,
-        value=0,
-        label="Vertical shift D"
-    )
-
-    mo.vstack([C, D])
-    return C, D
+    return (function_tex,)
 
 
 if __name__ == "__main__":
